@@ -5,7 +5,10 @@ from model import OrderLine, Batch
 
 def make_batch_and_line(sku, batch_qty, line_qty, line_sku=None):
     line_sku = line_sku if line_sku else sku
-    return (Batch("batch-001", sku, batch_qty), OrderLine("order-001", line_sku, line_qty))
+    return (
+        Batch("batch-001", sku, batch_qty),
+        OrderLine("order-001", line_sku, line_qty),
+    )
 
 
 def test_allocating_to_batch_reduces_the_availability_quantity():
@@ -42,18 +45,28 @@ def test_can_allocate_if_available_equal_to_required():
 
 
 def test_cannot_allocate_if_skus_do_not_match():
-    batch, line = make_batch_and_line("CHAIR", 5, 5, line_sku='TABLE')
+    batch, line = make_batch_and_line("CHAIR", 5, 5, line_sku="TABLE")
 
     batch.allocate(line)
 
     assert batch.available_quantity == 5
 
 
-def test_can_only_deallocate_allocated_lines():
-    batch, unallocated_line = make_batch_and_line("CHAIR", 5, 5, line_sku='TABLE')
+def test_cannot_deallocate_unallocated_lines():
+    batch, unallocated_line = make_batch_and_line("CHAIR", 5, 5)
 
     batch.deallocate(unallocated_line)
 
+    assert batch.available_quantity == 5
+
+
+def test_can_deallocate_allocated_lines():
+    batch, line = make_batch_and_line("CHAIR", 5, 5)
+
+    batch.allocate(line)
+    assert batch.available_quantity == 0
+
+    batch.deallocate(line)
     assert batch.available_quantity == 5
 
 

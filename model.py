@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Set
 
 
 @dataclass(frozen=True)
@@ -19,12 +19,27 @@ class Batch:
     def __init__(self, ref: str, sku: str, qty: int):
         self.reference = ref
         self.sku = sku
-        self.available_quantity = qty
+        self.total_qty = qty
+        self._allocated_order_lines: Set[OrderLine] = set()
 
     def allocate(self, line: OrderLine):
         if self.can_allocate(line):
-            return
-        self.available_quantity -= line.qty
+            self._allocated_order_lines.add(line)
+
+    def deallocate(self, line: OrderLine):
+        if self.can_deallocate(line):
+            self._allocated_order_lines.remove(line)
+
+    @property
+    def available_quantity(self) -> int:
+        return self.total_qty - self.allocated_quantity
+
+    @property
+    def allocated_quantity(self) -> int:
+        return sum([x.qty for x in self._allocated_order_lines])
 
     def can_allocate(self, line: OrderLine) -> bool:
-        return self.sku != line.sku or self.available_quantity < line.qty
+        return self.sku == line.sku and self.available_quantity >= line.qty
+
+    def can_deallocate(self, line: OrderLine) -> bool:
+        return line in self._allocated_order_lines
