@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 import pytest
 
@@ -93,4 +93,13 @@ def test_prefers_warehouse_batches_to_shipments():
 
 
 def test_prefers_earlier_batches():
-    pytest.fail("todo")
+    early_batch = Batch(ref="ref", qty=10, sku="sku", eta=date.today())
+    later_batch = Batch(
+        ref="ref", qty=10, sku="sku", eta=date.today() + timedelta(days=1)
+    )
+    line = OrderLine(reference="xyz", sku="sku", qty=10)
+
+    allocate(line, [early_batch, later_batch])
+
+    assert early_batch.available_quantity == 0
+    assert later_batch.available_quantity == 10
