@@ -16,7 +16,6 @@ class Order:
 
 
 class Batch:
-
     def __init__(self, ref: str, sku: str, qty: int):
         self.reference = ref
         self.sku = sku
@@ -24,6 +23,3 @@ class Batch:
 
     def allocate(self, line: OrderLine):
         self.available_quantity -= line.qty
-
-
-
