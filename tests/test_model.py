@@ -2,7 +2,7 @@ from datetime import datetime, date, timedelta
 
 import pytest
 
-from model import OrderLine, Batch, allocate
+from model import OrderLine, Batch, allocate, OutOfStockError
 
 
 def make_batch_and_line(sku, batch_qty, line_qty, line_sku=None):
@@ -103,3 +103,14 @@ def test_prefers_earlier_batches():
 
     assert early_batch.available_quantity == 0
     assert later_batch.available_quantity == 10
+
+
+def test_allocate_raises_out_of_stock_error():
+    early_batch = Batch(ref="ref", qty=10, sku="sku", eta=date.today())
+    later_batch = Batch(
+        ref="ref", qty=10, sku="sku", eta=date.today() + timedelta(days=1)
+    )
+    line = OrderLine(reference="xyz", sku="sku", qty=20)
+
+    with pytest.raises(OutOfStockError):
+        allocate(line, [early_batch, later_batch])
